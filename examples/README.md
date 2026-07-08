@@ -81,10 +81,40 @@ Instead:
   so the agent has continuous memory across runs — it remembers past tasks, its notes and the
   answers it received. If the resume fails (expired/deleted session), the watcher transparently
   starts a fresh one.
-- **Manual takeover**: on the agent machine run `claude --resume <id from agent-session-id.txt>` —
-  you get the full history of everything the automated agent did and can continue by hand in the
-  same context. Disable the scheduled task first (`Disable-ScheduledTask <name>`) so the watcher
-  does not drive the session in parallel; re-enable when done.
+### Manual takeover & handback
+
+The mental model that makes this simple: **a session is not a running process — it is a
+transcript on disk**. "Background mode" just means the watcher periodically resumes that
+transcript headless. There is nothing to "transfer" in either direction; the only rule is
+that the session must have exactly one driver at a time.
+
+**Take over (background → interactive):**
+
+```powershell
+Disable-ScheduledTask <task name>          # stop the watcher from driving the session
+claude --resume <id from agent-session-id.txt>
+```
+
+You land in the full history of everything the automated agent did — inspect it, continue
+its work by hand, give it instructions. (If a pass is mid-flight — `watch.lock` exists and
+is fresh — let it finish first.)
+
+**Hand back (interactive → background):**
+
+```powershell
+# 1. simply exit the interactive session (/exit) — your manual turns are already saved
+Enable-ScheduledTask <task name>           # 2. that's all
+```
+
+On the next message in the inbox the watcher resumes the SAME session id — the background
+agent wakes up remembering everything you did manually. Nothing to reconfigure; the id in
+`agent-session-id.txt` never changed.
+
+**Verify the handback:** `Get-ScheduledTask <task name>` shows `Ready`, and the next pass
+appears in `logs\watch.log` (watch it live with `viewer.ps1`).
+
+Order matters only for the one-driver rule: interactive work = task disabled; background
+work = interactive window closed. Never both at once.
 
 ## Troubleshooting (field-tested)
 
