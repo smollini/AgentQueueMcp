@@ -31,8 +31,35 @@ Both use a lock file to prevent overlapping passes, and rely on at-least-once de
 4. Register the scheduled task (**elevated** PowerShell — S4U + RunLevel Highest require
    admin; an unelevated attempt fails with "Access is denied"). Command below.
 5. Watch the first pass: `Get-Content <dir>\logs\watch.log -Wait` — an empty inbox exits
-   silently; send a ping task from the orchestrator to see the full loop fire.
+   silently; send a ping task from the orchestrator to see the full loop fire. The first pass
+   that actually processes messages also **creates the persistent session** (see below) and
+   writes its id to `<dir>\agent-session-id.txt`.
 6. Optional: open `viewer.ps1 -RunsDir <dir>\logs\runs` in a desktop window for a live view.
+
+## The persistent session — what the watcher creates and maintains
+
+The watcher does not start a blank agent every pass. It drives **one long-lived session**:
+
+- **First pass with messages**: no session file yet → the agent starts fresh; after the run
+  the watcher reads the `session_id` from the stream and saves it to
+  `<STATE_PATH>\agent-session-id.txt`.
+- **Every later pass**: the agent is invoked with `--resume <that id>` — same context,
+  cumulative memory: it remembers previous tasks, its own notes, and the answers it received
+  (including anything a human did during a manual takeover).
+- **Resume failure** (session expired/deleted): logged, the file is removed, a fresh session
+  starts transparently and the file is rewritten. Nothing to repair by hand.
+- **Deliberate context reset**: stop the task, delete `agent-session-id.txt`, start the task —
+  the next pass begins clean. Old sessions stay browsable in the agent CLI's resume picker.
+
+What lives in `<STATE_PATH>` once the watcher is running:
+
+| File | Meaning |
+|---|---|
+| `agent-session-id.txt` | id of the persistent session (the handle for `claude --resume`) |
+| `watch.lock` | present only while a pass is running; stale lock (older than the run limit) = crashed pass, safe to delete |
+| `logs\watch.log` | the watcher's own decisions: peek counts, spawn/skip, result summaries |
+| `logs\watch-stderr.log` | stderr of the agent CLI (startup warnings, errors) |
+| `logs\runs\run-*.jsonl` | full stream of each pass (thoughts, tool calls, results) — the input for `viewer.ps1` |
 
 ## Step-by-step: setting up the orchestrator trigger
 
