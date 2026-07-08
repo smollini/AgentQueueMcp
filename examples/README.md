@@ -20,6 +20,28 @@ Two ready-to-adapt scripts (fill in the placeholder paths at the top of each):
 Both use a lock file to prevent overlapping passes, and rely on at-least-once delivery
 (a crashed pass never loses a task — it reappears after the visibility timeout).
 
+## Step-by-step: setting up a worker trigger
+
+1. Build the server (`dotnet build -c Release`) and register the MCP server with your agent
+   CLI (`claude mcp add --scope user agent-queue --env AGENT_NAME=<name> -- dotnet <dll>`).
+2. Verify connectivity + stamp the first heartbeat:
+   `$env:AGENT_NAME='<name>'; dotnet <dll> --peek` → prints a number, no error.
+3. Copy `watch-worker-inbox.ps1` somewhere stable and fill in the four values at the top
+   (`agentName`, `dll`, `workspace` = where the agent should run, `dir` = state/log folder).
+4. Register the scheduled task (**elevated** PowerShell — S4U + RunLevel Highest require
+   admin; an unelevated attempt fails with "Access is denied"). Command below.
+5. Watch the first pass: `Get-Content <dir>\logs\watch.log -Wait` — an empty inbox exits
+   silently; send a ping task from the orchestrator to see the full loop fire.
+6. Optional: open `viewer.ps1 -RunsDir <dir>\logs\runs` in a desktop window for a live view.
+
+## Step-by-step: setting up the orchestrator trigger
+
+Same flow with `watch-orchestrator-inbox.ps1` (LLM summarizes incoming messages into
+`FEED.md` + notifies) **or** `notify-inbox.ps1` (popup only, no LLM — the human asks their
+agent to read the inbox). Pick one; both poll cheaply and register the same way. The
+orchestrator's `AGENT_COMM_DIR` should point at the same folder the watcher uses, so the
+`pending` detection (sent task without a result file) can steer the conditional polling.
+
 ## Registering the scheduled task (Windows)
 
 ```powershell
@@ -63,6 +85,19 @@ Instead:
   you get the full history of everything the automated agent did and can continue by hand in the
   same context. Disable the scheduled task first (`Disable-ScheduledTask <name>`) so the watcher
   does not drive the session in parallel; re-enable when done.
+
+## Troubleshooting (field-tested)
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Register-ScheduledTask: Access is denied` | shell not elevated | run the registration in an **admin** PowerShell |
+| `Register-ScheduledTask: value out of range (Duration)` | `[TimeSpan]::MaxValue` as RepetitionDuration | use a finite span, e.g. `New-TimeSpan -Days 3650` |
+| Watcher passes silently die; run logs are 0 bytes | PowerShell 5.1: any stderr output from a native exe + `$ErrorActionPreference='Stop'` throws mid-call | keep `EAP='Continue'` around the agent invocation (the example scripts already do) |
+| Agent CLI exits instantly: "requires Git for Windows or PowerShell" | agent spawned via `cmd /c` cannot detect a shell | spawn it directly from PowerShell (the example scripts already do) |
+| Agent shows `watcher-unknown` in `agents_health` | watcher never ran, or the build predates heartbeats | register the task / `git pull` + rebuild |
+| Agent shows `backlog` | its watcher is dead **or** the storage firewall cut it off — both look identical from outside | check the scheduled task on the machine AND the storage network rules |
+| No popup although a result arrived | you read the inbox manually before the next poll tick consumed nothing — the notifier only announces what is still in the queue | expected; the popup races a human by design |
+| Build cannot overwrite the DLL | a live MCP session holds `bin\Release\...\AgentQueueMcp.dll` | build to a separate output dir (`-o dist`) or restart the agent session |
 
 ## Choosing intervals
 

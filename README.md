@@ -202,6 +202,24 @@ Wire format: `base64(UTF-8 JSON)`.
 Task payload: `{ taskId, wiId, project, title, brief, allowedTools, mode, createdAt }`.
 Result payload: `{ taskId, wiId, status: "ok|error", output, prLink, error, finishedAt }`.
 
+## Claude Code skills (batteries included)
+
+[`.claude/skills/`](.claude/skills/) ships ready-made skills for Claude Code. Run `claude`
+inside this repo and they are active immediately; or copy the folders into your own
+workspace's `.claude/skills/` (that is the normal deployment — agents usually run in their
+project workspace, not in this repo):
+
+| Skill | Side | What it does |
+|---|---|---|
+| `agent-delegate` | orchestrator | "send X to \<agent\>" → composes a work brief, `send_task`; "check results" → collects, matches to sent tasks, relays worker questions to the human and sends the answers back |
+| `agent-inbox` | worker | Processes the inbox once: execute tasks within their declared mode, `send_result` → `ack`, ask `question`s without blocking, idempotent on `taskId` |
+| `agent-health` | both | Mesh health via `agents_health` + local trigger checks (scheduled task state, log freshness, stale locks) with verdict interpretation |
+| `agent-session` | both | The background session the watchers drive: inspect what it did, **take it over interactively** (`claude --resume`), hand it back so the watchers continue |
+
+The skills encode the operational rules that make the mesh safe: delegation only on explicit
+human request, workers never exceed the task's declared mode, ack only after the result is
+sent.
+
 ## Triggers / polling (watchers)
 
 There is no push in queue storage — agents poll. `dotnet AgentQueueMcp.dll --peek` prints the
