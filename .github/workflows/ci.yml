@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite
+        ports:
+          - 10000:10000
+          - 10001:10001
+          - 10002:10002
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: E2E over real MCP stdio against Azurite
+        working-directory: test
+        env:
+          AZURE_QUEUE_CONN: UseDevelopmentStorage=true
+        run: |
+          npm ci
+          node e2e.mjs

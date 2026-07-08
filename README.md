@@ -3,6 +3,7 @@
 > **Firewall-friendly messaging for AI agents.** One Azure Storage account becomes an addressed,
 > multi-agent message bus — pull-only, zero inbound ports, zero servers to host, costs pennies.
 
+[![CI](https://github.com/smollini/AgentQueueMcp/actions/workflows/ci.yml/badge.svg)](https://github.com/smollini/AgentQueueMcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![Release](https://img.shields.io/github/v/tag/smollini/AgentQueueMcp?label=release&color=2ea44f)](https://github.com/smollini/AgentQueueMcp/tags)
@@ -26,6 +27,32 @@ orchestrator ◀──get_messages── [inbox-orchestrator] ◀──send_resu
 Multi-turn conversations are supported: a worker can send a `question` back mid-task, the orchestrator answers with `info` in the same `conversationId`, then the result arrives — all through the same two tools.
 
 Built on the official [`ModelContextProtocol`](https://www.nuget.org/packages/ModelContextProtocol) C# SDK and `Azure.Storage.Queues`.
+
+## Quickstart (5 minutes, 2 machines)
+
+```bash
+# once: one storage account for the whole mesh (details in "Provisioning the Azure side")
+az storage account create -n <name> -g <rg> -l <region> --sku Standard_LRS
+az storage account show-connection-string -n <name> -g <rg> -o tsv   # -> AZURE_QUEUE_CONN env var on every machine
+
+# on every agent machine:
+git clone https://github.com/smollini/AgentQueueMcp && cd AgentQueueMcp
+dotnet build -c Release
+claude mcp add --scope user agent-queue --env AGENT_NAME=<unique-name> -- dotnet $PWD/bin/Release/net8.0/AgentQueueMcp.dll
+```
+
+Then, in Claude Code on the orchestrator machine:
+
+> *"Send a task to **worker-a**: analyse X and report back."* → `send_task`
+
+…and on the worker machine:
+
+> *"Check the inbox."* → `get_messages` → work → `send_result` → `ack_message`
+
+That's a working two-agent mesh. From there: [skills](#claude-code-skills-batteries-included)
+make those phrases first-class commands, [watchers](#background-operation-triggers-sessions-takeover)
+remove the manual polling, and the [firewall setup](#security) locks the account down to your
+networks.
 
 ## Architecture
 
