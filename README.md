@@ -1,6 +1,20 @@
 # AgentQueueMcp
 
-MCP (Model Context Protocol) server in **C# / .NET 8** for **addressed agent-to-agent messaging over Azure Storage Queues**, in a pure **pull model**: no inbound traffic on any host — every agent polls its own inbox. Works great when machines sit behind closed inbound firewalls (different VMs, different customers, different projects).
+> **Firewall-friendly messaging for AI agents.** One Azure Storage account becomes an addressed,
+> multi-agent message bus — pull-only, zero inbound ports, zero servers to host, costs pennies.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![Release](https://img.shields.io/github/v/tag/smollini/AgentQueueMcp?label=release&color=2ea44f)](https://github.com/smollini/AgentQueueMcp/tags)
+[![MCP](https://img.shields.io/badge/Model_Context_Protocol-server-7c3aed)](https://modelcontextprotocol.io)
+
+You have AI agents on machines you cannot open ports on — dev boxes at different customers,
+VMs in different networks, laptops behind NAT. They need to delegate work to each other and
+talk back. Web hooks, tunnels and hosted brokers are all non-starters in locked-down
+environments. **The move: don't connect the machines at all.** Every agent polls its own inbox
+queue over outbound HTTPS; an envelope contract gives you addressing, replies and multi-turn
+conversations. This repo is that idea as a production-ready MCP (Model Context Protocol)
+server in **C# / .NET 8** — usable from Claude Code or any MCP client.
 
 **Every agent has a name and its own inbox queue** (`inbox-<name>`, created automatically). Messages are addressed envelopes, so N agents can talk to each other and replies always know where to go:
 
