@@ -220,20 +220,73 @@ The skills encode the operational rules that make the mesh safe: delegation only
 human request, workers never exceed the task's declared mode, ack only after the result is
 sent.
 
-## Triggers / polling (watchers)
+## Background operation: triggers, sessions, takeover
 
-There is no push in queue storage — agents poll. `dotnet AgentQueueMcp.dll --peek` prints the
-pending message count of the agent's own inbox and exits (no MCP session, no LLM), which makes
-scheduled watchers essentially free while idle: peek every few minutes, spawn the actual LLM
-agent only when the count is non-zero. Ready-to-adapt watcher scripts for both sides (worker
-and orchestrator, incl. Windows scheduled-task registration and known gotchas) live in
-[`examples/`](examples/README.md).
+This is the part that turns "an MCP server" into **agents that run unattended** — and still
+let a human step in at any moment.
 
-Every `--peek` (and every `get_messages`) also stamps a **heartbeat** into the inbox's queue
-metadata. That makes watcher liveness observable from any machine via the `agents_health` tool:
-an agent with waiting messages older than 15 min is reported as `backlog` (its watcher is not
-picking up), one that stopped heartbeating as `watcher-stale` — no access to the remote host
-needed, the queue itself carries the health signal.
+### 1. Triggers (watchers)
+
+There is no push in queue storage — agents poll. The trick that keeps this free:
+
+```
+scheduled task (every 2-3 min) ──► dotnet AgentQueueMcp.dll --peek     ← no LLM, one HTTPS call
+                                        │
+                              count = 0 ┴ count > 0 ──► spawn the LLM agent to process
+```
+
+`--peek` prints the pending count of the agent's own inbox and exits — an idle mesh costs
+nothing but a few HTTPS calls. Only a non-empty inbox spawns the actual agent. Every peek
+also stamps a **heartbeat** into the queue's metadata, so `agents_health` can tell from any
+machine whether a remote watcher is alive (`backlog` = messages waiting, nobody picks up;
+`watcher-stale` = heartbeat stopped) — the queue itself carries the health signal.
+
+Ready-to-adapt scripts (worker, orchestrator, notify-only popup variant), scheduled-task
+registration and a field-tested troubleshooting table live in [`examples/`](examples/README.md).
+
+### 2. One persistent session per agent
+
+The watcher never starts a blank agent. Every pass **resumes the same session** (its id is
+kept in the watcher's state folder, `agent-session-id.txt`), so the background agent has
+continuous memory: previous tasks, its own notes, answers it received. A failed resume
+(expired session) transparently falls back to a fresh one. Each pass streams its execution
+to `logs\runs\*.jsonl` — keep [`examples/viewer.ps1`](examples/viewer.ps1) open in a desktop
+window for a **live view** of what the background agent is doing.
+
+### 3. Human takeover — and handback
+
+A session is not a running process; it is a **transcript on disk**. "Background mode" only
+means the watcher periodically resumes that transcript headless. So a human can take the
+wheel and give it back at any time — the only rule is **one driver at a time**:
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "lineColor":"#ffffff","textColor":"#ffffff",
+  "primaryColor":"#1c2540","primaryTextColor":"#ffffff","primaryBorderColor":"#7a86a8",
+  "clusterBkg":"#111a30","clusterBorder":"#39456b",
+  "edgeLabelBackground":"#0b1020","fontSize":"14px"}}}%%
+flowchart LR
+    subgraph C[" "]
+        BG["🤖 Background<br/><i>watcher drives the session</i>"]
+        HU["🧑 Interactive<br/><i>you drive the session</i>"]
+    end
+    BG ==>|"Disable-ScheduledTask<br/>claude --resume &lt;session-id&gt;"| HU
+    HU ==>|"exit the session<br/>Enable-ScheduledTask"| BG
+    style C fill:#0b1020,stroke:#0b1020
+    style BG fill:#16324f,stroke:#63b3ed,stroke-width:2px,color:#ffffff
+    style HU fill:#3b2c14,stroke:#f6ad55,stroke-width:2px,color:#ffffff
+    linkStyle default stroke:#ffffff,stroke-width:2px
+```
+
+- **Take over**: `Disable-ScheduledTask <name>` → `claude --resume <id>` — you land in the
+  full history of everything the background agent did and continue by hand.
+- **Hand back**: just exit the session and `Enable-ScheduledTask <name>` — nothing to
+  transfer or reconfigure; on the next message the watcher resumes the same id and the
+  background agent **remembers everything you did manually**.
+
+Details (state-folder contents, context reset, verification): [`examples/README.md`](examples/README.md).
+The [`agent-session`](.claude/skills/agent-session/SKILL.md) skill walks an agent through
+this procedure interactively.
 
 ## Delivery semantics
 
