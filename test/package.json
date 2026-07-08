@@ -1,0 +1,10 @@
+{
+  "name": "agent-queue-mcp-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only E2E harness for the C# server (any MCP client would do)",
+  "dependencies": {
+    "@azure/storage-queue": "^12.0.0",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
