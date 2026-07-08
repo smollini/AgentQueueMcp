@@ -9,6 +9,10 @@
 [![Release](https://img.shields.io/github/v/tag/smollini/AgentQueueMcp?label=release&color=2ea44f)](https://github.com/smollini/AgentQueueMcp/tags)
 [![MCP](https://img.shields.io/badge/Model_Context_Protocol-server-7c3aed)](https://modelcontextprotocol.io)
 
+<p align="center">
+  <img src="assets/demo.svg" alt="Two terminals: the orchestrator delegates a task, the worker behind a firewall picks it up, does the analysis and sends the result back through the queue" width="920">
+</p>
+
 You have AI agents on machines you cannot open ports on — dev boxes at different customers,
 VMs in different networks, laptops behind NAT. They need to delegate work to each other and
 talk back. Web hooks, tunnels and hosted brokers are all non-starters in locked-down

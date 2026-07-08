@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="ui-monospace,'Cascadia Code',Consolas,Menlo,monospace" font-size="13">
+  <style>
+    .ln { opacity: 0; }
+    @keyframes k2  { 0%,1.5%  { opacity:0 } 2.5%  { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k8  { 0%,7.5%  { opacity:0 } 8.5%  { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k13 { 0%,12.5% { opacity:0 } 13.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k24 { 0%,23.5% { opacity:0 } 24.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k30 { 0%,29.5% { opacity:0 } 30.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k36 { 0%,35.5% { opacity:0 } 36.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k42 { 0%,41.5% { opacity:0 } 42.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k48 { 0%,47.5% { opacity:0 } 48.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k53 { 0%,52.5% { opacity:0 } 53.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k62 { 0%,61.5% { opacity:0 } 62.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k68 { 0%,67.5% { opacity:0 } 68.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k74 { 0%,73.5% { opacity:0 } 74.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    @keyframes k80 { 0%,79.5% { opacity:0 } 80.5% { opacity:1 } 96% { opacity:1 } 100% { opacity:0 } }
+    .a2  { animation: k2  18s linear infinite }
+    .a8  { animation: k8  18s linear infinite }
+    .a13 { animation: k13 18s linear infinite }
+    .a24 { animation: k24 18s linear infinite }
+    .a30 { animation: k30 18s linear infinite }
+    .a36 { animation: k36 18s linear infinite }
+    .a42 { animation: k42 18s linear infinite }
+    .a48 { animation: k48 18s linear infinite }
+    .a53 { animation: k53 18s linear infinite }
+    .a62 { animation: k62 18s linear infinite }
+    .a68 { animation: k68 18s linear infinite }
+    .a74 { animation: k74 18s linear infinite }
+    .a80 { animation: k80 18s linear infinite }
+    .you  { fill:#63b3ed }
+    .ag   { fill:#a78bfa }
+    .ok   { fill:#4ade80 }
+    .dim  { fill:#8b98b8 }
+    .txt  { fill:#e6edf3 }
+    .warn { fill:#f6ad55 }
+    .hdr  { fill:#9fb0d0; font-size:12px }
+  </style>
+
+  <!-- canvas -->
+  <rect x="0" y="0" width="960" height="430" rx="10" fill="#0b1020"/>
+
+  <!-- left terminal: orchestrator -->
+  <rect x="18" y="16" width="452" height="398" rx="8" fill="#101a33" stroke="#39456b"/>
+  <rect x="18" y="16" width="452" height="30" rx="8" fill="#182448"/>
+  <circle cx="38" cy="31" r="5" fill="#ff5f57"/><circle cx="56" cy="31" r="5" fill="#febc2e"/><circle cx="74" cy="31" r="5" fill="#28c840"/>
+  <text x="244" y="35" text-anchor="middle" class="hdr">orchestrator - Claude Code</text>
+
+  <g transform="translate(34,72)">
+    <text class="ln a2"><tspan class="you">you &gt;</tspan><tspan class="txt" dx="6">send a task to worker-a: find where</tspan></text>
+    <text y="20" class="ln a2"><tspan class="txt" dx="44">invoice totals get rounded</tspan></text>
+    <text y="52" class="ln a8"><tspan class="ag">agent &gt;</tspan><tspan class="txt" dx="6">send_task -&gt; inbox-worker-a</tspan></text>
+    <text y="72" class="ln a8"><tspan class="dim" dx="52">taskId 3f2a91 = conversationId</tspan></text>
+    <text y="96" class="ln a13"><tspan class="ok">[ok]</tspan><tspan class="dim" dx="6">queued - worker polls it up within minutes</tspan></text>
+
+    <text y="152" class="ln a62"><tspan class="warn">[popup]</tspan><tspan class="txt" dx="6">result from worker-a - check the inbox</tspan></text>
+    <text y="184" class="ln a68"><tspan class="you">you &gt;</tspan><tspan class="txt" dx="6">check results</tspan></text>
+    <text y="216" class="ln a74"><tspan class="ag">agent &gt;</tspan><tspan class="txt" dx="6">result 3f2a91 </tspan><tspan class="ok">[ok]</tspan></text>
+    <text y="236" class="ln a74"><tspan class="txt" dx="52">rounding lives in InvoiceCalc.cs:214</tspan></text>
+    <text y="256" class="ln a80"><tspan class="dim" dx="52">2 call sites affected - full report archived</tspan></text>
+  </g>
+
+  <!-- right terminal: worker -->
+  <rect x="490" y="16" width="452" height="398" rx="8" fill="#131228" stroke="#5b4a86"/>
+  <rect x="490" y="16" width="452" height="30" rx="8" fill="#221d40"/>
+  <circle cx="510" cy="31" r="5" fill="#ff5f57"/><circle cx="528" cy="31" r="5" fill="#febc2e"/><circle cx="546" cy="31" r="5" fill="#28c840"/>
+  <text x="716" y="35" text-anchor="middle" class="hdr">worker-a - behind a customer firewall</text>
+
+  <g transform="translate(506,72)">
+    <text class="ln a24"><tspan class="dim">[watcher]</tspan><tspan class="txt" dx="6">peek -&gt; 1 message, spawning agent</tspan></text>
+    <text y="32" class="ln a30"><tspan class="ag">agent &gt;</tspan><tspan class="txt" dx="6">task 3f2a91: find invoice rounding</tspan></text>
+    <text y="64" class="ln a36"><tspan class="dim" dx="52">Grep "Math.Round" -&gt; 3 hits</tspan></text>
+    <text y="84" class="ln a42"><tspan class="dim" dx="52">Read InvoiceCalc.cs:200-240</tspan></text>
+    <text y="116" class="ln a48"><tspan class="ag">agent &gt;</tspan><tspan class="txt" dx="6">send_result -&gt; inbox-orchestrator</tspan></text>
+    <text y="148" class="ln a53"><tspan class="ok">[ok]</tspan><tspan class="txt" dx="6">ack_message - task removed from queue</tspan></text>
+
+    <text y="204" class="ln a80"><tspan class="dim">[watcher]</tspan><tspan class="dim" dx="6">peek -&gt; 0 messages, idle (no LLM cost)</tspan></text>
+  </g>
+
+  <!-- footer -->
+  <text x="480" y="424" text-anchor="middle" class="dim" font-size="11">outbound HTTPS only - no inbound ports on either machine - one Azure Storage account in between</text>
+</svg>
